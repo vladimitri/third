@@ -1,0 +1,18 @@
+<?= $this->render('header.phtml'); ?>
+    <table border="1">
+        <tr>
+            <th>Nume</th>
+            <th>Data nasterii</th>
+            <th>Detalii</th>
+        </tr>                                      
+        <? foreach ($this->contacte as $contact): ?>
+            <tr>
+                <td><?= $contact->nume ?></td>
+                <td><?= $contact->data_nasterii ?></td>
+                <td><?= $contact->detalii ?></td>
+            </tr>                                      
+        <? endforeach; ?>
+    </table>
+    <br />
+    <a href="/index/adauga">Adauga</a>
+<?= $this->render('footer.phtml'); ?>

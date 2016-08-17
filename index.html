@@ -1,0 +1,41 @@
+<html>
+<head>
+    <style type="text/css">
+
+    </style>
+    <script src="/jquery-3.1.0.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            var showIndex = function() {
+                $('.loading').hide();
+            }
+            var showLoading = function(){
+                $('.loading').show();
+                $('.page').hide();
+            }
+            var interpretHash = function(){
+                switch(window.location.hash){
+                    case '#index':      showIndex();break;
+                    case '#loading':    showLoading();break;
+                    default : showPage();
+                }
+            }
+            interpretHash();
+
+        });
+    </script>
+</head>
+<body>
+    <div class="loading">Loading...</div>
+    <div class="page">
+        <table class="indextab">
+            <tr>
+                <th>Imagine</th>
+                <th>Nume produs</th>
+                <th>Price</th>
+                <th>Descriere</th>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

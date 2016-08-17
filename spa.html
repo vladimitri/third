@@ -1,0 +1,192 @@
+<html>
+    <head>
+        <style type="text/css">
+            .page {
+                display: none;
+            }
+        </style>
+        
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+        
+        <script type="text/javascript">
+            /*
+                Tot codul se executa dupa ce pagina s-a incarcat.
+                Fiecare "pagina" va avea propriul link in location hash.
+                La refresh se va parsa location hash si aplicatia va incarca pagina corespunzatoare.
+                Request-urile si submit-urile catre server se fac prin AJAX. Exceptie: submit-urile de formulare care contin input-uri file se fac prin iframe-uri ascunse (vezi atributul target pe form si evenimentul onload pe iframe).
+                Server-ul raspunde numai cu JSON de forma {"success": true/false, "message": "A aparut o eroare", "data": array/obiect de date}
+            */
+            
+            $(document).ready(function () {
+                var showLoader = function () {
+                    $('.page').hide();
+                    $('.loader').show();
+                }
+                
+                var hideLoader = function () {
+                    $('.loader').hide();
+                }
+                
+                var refreshIndexTable = function (callback) {
+                    $.ajax('/api/list', {
+                        type: 'get',
+                        dataType: 'json',
+                        success: function (response) {
+                            if (!response || !response.success || !response.data) {
+                                alert(response && response.message ? response.message : 'Eroare');
+                            } else {
+                                $('.indexTable .indexRow').remove();
+
+                                var html = '';
+                                $.each(response.data, function (index, value) {
+                                    html += 
+                                        '<tr class="indexRow">' +
+                                            '<td>' + value.nume + '</td>' +
+                                            '<td>' + value.data_nasterii + '</td>' +
+                                            '<td>' + value.detalii + '</td>' +
+                                            '<td>' +
+                                                '<a href="#form/id/' + value.id + '" class="formLink">Editare</a>' +
+                                                ' | ' +
+                                                '<a href="#remove/id/' + value.id + '" class="removeLink">Stergere</a>' +
+                                            '</td>' +
+                                        '</tr>'
+                                    ;
+                                });
+                                
+                                $('.indexTable').append(html);
+                                
+                                if (callback) {
+                                    callback();
+                                }
+                            }
+                        },
+                        error: function () {
+                            alert('Eroare');
+                        }
+                    });
+                }
+                
+                var showIndex = function () {
+                    showLoader();
+                    
+                    window.location.hash = '#index';
+                    
+                    refreshIndexTable(function () {
+                        hideLoader();
+                        
+                        $('.indexPage').show();
+                    });
+                }
+                
+                var showForm = function (id) {
+                    showLoader();
+                    
+                    window.location.hash = '#form' + (id ? '/id/' + id : '');
+                    
+                    if (id) {
+                        // precompleteaza valorile
+                    } else {
+                        $('.mainForm .input').val('');
+                    }
+                    
+                    hideLoader();
+                    
+                    $('.formPage').show();
+                }
+                
+                var remove = function (id) {
+                    // AJAX call to remove
+                    showIndex(); // to refresh the list
+                }
+                
+                var checkHash = function () {
+                    switch (window.location.hash) {
+                        case '#index': showIndex(); break;
+                        case '#form': showForm(); break;
+                        default:
+                            if (window.location.hash.indexOf('#form/id/') == 0) {
+                                var id;
+                                // extrage id-ul din hash in loc de dummy 1
+                                id = 1;
+                                showForm(id);
+                            } else if (window.location.hash.indexOf('#remove/id/') == 0) {
+                                var id;
+                                // extrage id-ul din hash in loc de dummy 1
+                                id = 1;
+                                remove(id);
+                            } else {
+                                // cazul final
+                                showIndex();
+                            }
+                        break;
+                    }
+                }
+                
+                $('.mainForm').submit(function (event) {
+                    event.preventDefault();
+                    
+                    $.ajax('/api/form', {
+                        type: 'post',
+                        dataType: 'json',
+                        data: $('.mainForm').serialize(),
+                        success: function (response) {
+                            if (!response || !response.success) {
+                                alert(response && response.message ? response.message : 'Eroare');
+                            } else {
+                                showIndex();
+                            }
+                        },
+                        error: function () {
+                            alert('Eroare');
+                        }
+                    });
+                });
+                
+                $(window).on('hashchange', checkHash);
+
+                checkHash();
+            });
+        </script>
+    </head>
+    <body>
+    
+        <div class="loader">
+            Se incarca
+        </div>
+        
+        <div class="page indexPage">
+            <table border="1" class="indexTable">
+                <tr>
+                    <th>Nume</th>
+                    <th>Data Nasterii</th>
+                    <th>Detalii</th>
+                    <th>&nbsp;</th>
+                </tr>
+            </table>
+            <a href="#form" class="formLink">Adauga</a>
+        </div>
+        
+        <div class="page formPage">
+            <form class="mainForm">
+                <table>
+                    <tr>
+                        <td>Nume*:</td>
+                        <td><input type="text" class="input" name="nume" /></td>
+                    </tr>
+                    <tr>
+                        <td>Data Nasterii*:</td>
+                        <td><input type="text" class="input" name="data_nasterii" /></td>
+                    </tr>
+                    <tr>
+                        <td>Detalii:</td>
+                        <td><textarea class="input" name="detalii"></textarea></td>
+                    </tr>
+                </table>
+                <input type="submit" value="OK" />
+            </form>
+            <br />
+            <a href="#index" class="adaugaLink">Acasa</a>
+        </div>
+        
+    </body>
+</html>
