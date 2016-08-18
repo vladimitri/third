@@ -91,11 +91,38 @@ class MainController extends Zend_Controller_Action{
                     'message' => 'no id'.'error 2'
                 ));
             }
-
-
         }
     }
+    public function removefromcartAction(){
+        if($this->getRequest()->getParam('id')){
+            $id = $id = $this->getRequest()->getParam('id');
+            if($id){
+                try{
+                    $cart = new Zend_Session_Namespace('cart');
+                    if(isset($cart->products[$id]) && $cart->products[$id]>1){
+                        $cart->products[$id]--;
+                    } else if($cart->products[$id] == 1){
+                        unset($cart->products[$id]);
+                    }
+                    if(count($cart->products)==0){
+                        unset($cart->products);
+                    }
+                    echo Zend_Json :: encode(array(
+                        'success' => true
+                    ));
 
+                } catch (Exception $ex){
+                    echo Zend_Json :: encode(array(
+                        'success' => false
+                    ));
+                }
+            } else {
+                echo Zend_Json :: encode(array(
+                    'success' => false
+                ));
+            }
+        }
+    }
 
 }
 

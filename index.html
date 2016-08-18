@@ -24,7 +24,12 @@
                     $('.loading').hide();
                     $('.indexPage').show();
                 });
+            }
 
+            var showEmptyCart = function (){
+                hideAll();
+                $('.cartPage').hide();
+                $('.emptycart').show();
             }
 
             var showLogin = function(){
@@ -41,9 +46,6 @@
                 });
             }
 
-
-
-
             var showLoading = function(){
                 $('div').hide();
                 $('.loading').show();
@@ -58,24 +60,34 @@
                             alert(result && !result.success ? result.message :'eroare');
                         } else {
                             $('.cartRow').remove();
+                            $('.cartTotal').remove();
+                            var total=0;
                             var html ='';
-                            console.log(result);
-                            $.each(result.data ,function(index,value){
-                                console.log(value.title);
-                                html+=  '<tr class="cartRow">'+
-                                            '<td>' + '<img src="uploads/'+value.id + value.image+'" class="img">' + '</td>'+
-                                            '<td>'+value.title +'</td>' +
-                                            '<td>'+value.price+'</td>'+
-                                            '<td>'+result.quantity[value.id]+'</td>'+
-                                        '</tr>'
-                            });
-                            console.log(" xxx");
-                            $('.cartTable').append(html);
+                            console.log(result.data.length+1);
+                            if(result.data.length!=0) {
+                                $.each(result.data, function (index, value) {
+                                    total += value.price * result.quantity[value.id];
+                                    html += '<tr class="cartRow">' +
+                                            '<td>' + '<img src="uploads/' + value.id + value.image + '" class="img">' + '</td>' +
+                                            '<td>' + value.title + '</td>' +
+                                            '<td>' + value.price + '</td>' +
+                                            '<td>' + result.quantity[value.id] + '</td>' +
+                                            '<td>' + '<a href="#removefromcart/id/' + value.id + '">Remove from cart</a>' + '</td>'
+                                    '</tr>';
+                                });
+                                $('.cartTable').append(html);
+                                $('.cartTable').append('<p class="cartTotal">Total price :' + total + '</p>');
+                                $('.cartTable').append('<a class="cartTotal" href="#buy">Buy</a>');
+                                if(callback){
+                                    callback();
+                                }
+                            } else {
+                                if(callback){
+                                    callback();
+                                }
+                                showEmptyCart();
+                            }
                         }
-                        if(callback){
-                            callback();
-                        }
-
 
                     },
                     error : function (){
@@ -110,7 +122,6 @@
                                 callback();
                             }
                         }
-
                     },
                     error : function(){
                         alert('error');
@@ -146,12 +157,32 @@
                                     }
                                 },
                                 error : function (result){
-                                    console.log(result);
-                                    console.log(1);
+                                    alert('error');
+                                }
+                            });
+                        } else if(window.location.hash.indexOf('#removefromcart/id/')==0){
+                            hideAll();
+                            var elements = window.location.hash.split('/');
+                            var id = elements[2];
+                            $.ajax('/main/removefromcart',{
+                                type : 'get' ,
+                                dataType :'json',
+                                data :{
+                                    id : id
+                                },
+                                success : function(result){
+                                    if(!result || !result.success){
+                                        alert (result && !result.success ? 'didnt work' : 'error');
+                                    } else {
+                                        window.location.hash='#cart';
+                                        showCart();
+                                    }
+                                },
+                                error : function(){
+                                    alert('crashed');
                                 }
                             });
                         }
-
                         ;break
                 }
 
@@ -196,6 +227,11 @@
                 <th>Descriere</th>
             </tr>
         </table>
+    </div>
+
+    <div class="emptycart">
+        The cart is empty
+        <a href="#index">Home</a>
     </div>
 
     <div class="cartPage">
