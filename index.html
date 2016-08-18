@@ -8,73 +8,158 @@
     </style>
     <script src="/jquery-3.1.0.js"></script>
     <script type="text/javascript">
-        $(document).ready(function(){
-            var showIndex = function() {
-                $('.loading').hide();
-            }
-            var showLoading = function(){
-                $('.loading').show();
-                $('.page').hide();
-            }
-            var interpretHash = function(){
-                switch(window.location.hash){
-                    case '#index':      showIndex();break;
-                    case '#loading':    showLoading();break;
-                    default : showIndex();
-                }
-            }
-            var getIndexTable = function(callback){
-                $.ajax('/main/list',{
-                    type:'get' ,
-                    dataType: 'json' ,
-                    success : function(response){
-                        if(!response || !response.success ||!response.data){
-                            alert(response && response.message ? response.message : 'error');
-                        } else {
-                            $('.indextab .indexRow').remove();
+        $(document).ready(function() {
 
-                            var html='';
-                            $.each(response.data,function(index,value){
-                                html+= '<tr class="indexRow">' +
-                                            '<th>'+  '<img src="/uploads/'+value.id+value.image+'" class="img">' + '</th>' +
-                                            '<th>'+value.title+'</th>' +
-                                            '<th>'+value.price+'</th>' +
-                                            '<th>'+value.description+'</th>' +
-                                            '<th>' +
-                                                '<a href="#form/id/' + value.id + '" class="formLink">Editare</a>' +
-                                                ' | ' +
-                                                '<a href="#remove/id/' + value.id + '" class="removeLink">Stergere</a>' +
-                                            "</th>" +
-                                        "</tr>" ;
-                            });
-
-                            $('.indextab').append(html);
-
-                            if(callback){
-                                callback();
-                            }
-
-                        }
-                    },
-                    error : function (){
-                        alert('error');
-                    }
-                })
+            var hideAll = function(){
+                $('div').hide();
             }
+
             var showIndex = function(){
-                showLoading();
-                window.location.hash = '#index';
+                hideAll();
 
-                getIndexTable(function () {
+                showLoading();
+                refreshIndexTable(function(){
+                    $('.notlogged').show();
+                    $('.cart').show();
                     $('.loading').hide();
-                    $('.page').show();
+                    $('.indexPage').show();
                 });
 
             }
-            showIndex();
-            $(window).on('hashchange',interpretHash);
 
-            interpretHash();
+            var showLogin = function(){
+                hideAll();
+                $('.loginD').show();
+            }
+
+            var showCart = function(){
+                hideAll();
+                showLoading();
+                refreshCartTable(function(){
+                    $('.loading').hide();
+                    $('.cartPage').show();
+                });
+            }
+
+
+
+
+            var showLoading = function(){
+                $('div').hide();
+                $('.loading').show();
+            }
+
+            var refreshCartTable = function(callback){
+                $.ajax('/main/cart',{
+                    data:'get',
+                    dataType:'json',
+                    success : function(result){
+                        if(!result || !result.success ||!result.data){
+                            alert(result && !result.success ? result.message :'eroare');
+                        } else {
+                            $('.cartRow').remove();
+                            var html ='';
+                            console.log(result);
+                            $.each(result.data ,function(index,value){
+                                console.log(value.title);
+                                html+=  '<tr class="cartRow">'+
+                                            '<td>' + '<img src="uploads/'+value.id + value.image+'" class="img">' + '</td>'+
+                                            '<td>'+value.title +'</td>' +
+                                            '<td>'+value.price+'</td>'+
+                                            '<td>'+result.quantity[value.id]+'</td>'+
+                                        '</tr>'
+                            });
+                            console.log(" xxx");
+                            $('.cartTable').append(html);
+                        }
+                        if(callback){
+                            callback();
+                        }
+
+
+                    },
+                    error : function (){
+                        //alert('crashed');
+                    }
+                });
+            }
+
+
+            var refreshIndexTable = function(callback){
+                $.ajax('/main/getproducts',{
+                    type : 'get' ,
+                    dataType : 'Json' ,
+                    success : function(result){
+                        if(!result || !result.success || !result.data){
+                            alert('Error');
+                        } else {
+//                            $('.indexTable').remove();
+                            $('.indexRow').remove();
+                            var html = '';
+                            $.each(result.data,function(index,value){
+                                html += ' <tr class="indexRow"> ' +
+                                            '<td>' + '<img src="uploads/'+value.id + value.image+'" class="img">' + '</td>' +
+                                            '<td>' + value.title + '</td>' +
+                                            '<td>' + value.price + '</td>' +
+                                            '<td>' + value.description + '</td>' +
+                                            '<td>'+'<a href="#addtocart/id/'+value.id+'">Add to cart</a>'+'</td>'
+                                        '</tr>'
+                            });
+                            $('.indexTable').append(html);
+                            if(callback){
+                                callback();
+                            }
+                        }
+
+                    },
+                    error : function(){
+                        alert('error');
+                    }
+                });
+            }
+
+
+            var hashChange = function(){
+
+                switch(window.location.hash){
+                    case '' :window.location.hash='#index' ;break;
+                    case '#index' : showIndex(); break;
+                    case '#login' : showLogin();break;
+                    case '#cart' : showCart();break;
+                    default :
+                        if(window.location.hash.indexOf('#addtocart/id/')==0){
+                            hideAll();
+                            var elements = window.location.hash.split('/');
+                            var id = elements[2];
+                            $.ajax('/main/addtocart',{
+                                type : 'get' ,
+                                dataType : 'json',
+                                data :{
+                                    id : id
+                                },
+                                success: function(result){
+                                    if(!result || !result.success){
+                                        alert(result && !result.success ? result.message : 'Error')
+                                    } else {
+                                        window.location.hash='#index';
+                                        showIndex();
+                                    }
+                                },
+                                error : function (result){
+                                    console.log(result);
+                                    console.log(1);
+                                }
+                            });
+                        }
+
+                        ;break
+                }
+
+            }
+
+            $(window).on('hashchange', hashChange);
+
+            hashChange();
 
 
         });
@@ -82,8 +167,28 @@
 </head>
 <body>
     <div class="loading">Loading...</div>
-    <div class="page">
-        <table class="indextab">
+
+
+    <div class="indexPage">
+
+        <div class="notlogged">
+            <a href="#login">Login</a>
+        </div>
+
+        <div class="logged">Logged as :</div>
+
+        <div class="logged">
+            <a href="#logout">Logout</a>
+        </div>
+
+        <div class="logged">
+            <a href="#edit">Edit</a>
+        </div>
+
+        <div class="cart"><a href="#cart">Cart</a></div>
+
+        Produse:
+        <table class="indexTable">
             <tr>
                 <th>Imagine</th>
                 <th>Nume produs</th>
@@ -91,6 +196,38 @@
                 <th>Descriere</th>
             </tr>
         </table>
+    </div>
+
+    <div class="cartPage">
+        <a href="#index" >Home</a><br/>
+        Incart:
+        <table class="cartTable">
+            <tr>
+                <th>Imagine</th>
+                <th>Nume produs</th>
+                <th>Price</th>
+                <th>Cantitate</th>
+            </tr>
+        </table>
+    </div>
+
+    <div class="loginD">
+        <form class="loginForm">
+            Username:<input type="text" name="userid"><br />
+            Password:<input type="password" name="password"><br />
+            <input type="submit" name="check" value="login">
+            <a href="#index" >Home</a>
+        </form>
+    </div>
+
+    <div class="editD">
+        <form class="editForm">
+            Title:<input type="text" name="prodTitle"><br/>
+            Price:<input type="number" name="prodPrice"><br/>
+            Description:<textarea rows="4" cols="50" name="prodDescription"></textarea><br/>
+            Image:<input type="text" name="image"><br/>
+            <input type="submit" value="Save"><br/>
+        </form>
     </div>
 </body>
 </html>

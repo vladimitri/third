@@ -1,0 +1,96 @@
+<html>
+<head>
+    <style type="text/css">
+        .img{
+            width:150px;
+            height:100px;
+        }
+    </style>
+    <script src="/jquery-3.1.0.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            var showIndex = function() {
+                $('.loading').hide();
+            }
+            var showLoading = function(){
+                $('.loading').show();
+                $('.page').hide();
+            }
+            var interpretHash = function(){
+                switch(window.location.hash){
+                    case '#index':      showIndex();break;
+                    case '#loading':    showLoading();break;
+                    default : showIndex();
+                }
+            }
+            var getIndexTable = function(callback){
+                $.ajax('/main/list',{
+                    type:'get' ,
+                    dataType: 'json' ,
+                    success : function(response){
+                        if(!response || !response.success ||!response.data){
+                            alert(response && response.message ? response.message : 'error');
+                        } else {
+                            $('.indextab .indexRow').remove();
+
+                            var html='';
+                            $.each(response.data,function(index,value){
+                                html+= '<tr class="indexRow">' +
+                                            '<th>'+  '<img src="/uploads/'+value.id+value.image+'" class="img">' + '</th>' +
+                                            '<th>'+value.title+'</th>' +
+                                            '<th>'+value.price+'</th>' +
+                                            '<th>'+value.description+'</th>' +
+                                            '<th>' +
+                                                '<a href="#form/id/' + value.id + '" class="formLink">Editare</a>' +
+                                                ' | ' +
+                                                '<a href="#remove/id/' + value.id + '" class="removeLink">Stergere</a>' +
+                                            "</th>" +
+                                        "</tr>" ;
+                            });
+
+                            $('.indextab').append(html);
+
+                            if(callback){
+                                callback();
+                            }
+
+                        }
+                    },
+                    error : function (){
+                        alert('error');
+                    }
+                })
+            }
+            var showIndex = function(){
+                showLoading();
+                window.location.hash = '#index';
+
+                getIndexTable(function () {
+                    $('.loading').hide();
+                    $('.page').show();
+                });
+
+            }
+            showIndex();
+            $(window).on('hashchange',interpretHash);
+
+            interpretHash();
+
+
+        });
+    </script>
+</head>
+<body>
+    <div class="loading">Loading...</div>
+    <div class="page">
+        <table class="indextab">
+            <tr>
+                <th>Imagine</th>
+                <th>Nume produs</th>
+                <th>Price</th>
+                <th>Descriere</th>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>
