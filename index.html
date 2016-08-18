@@ -14,12 +14,33 @@
                 $('div').hide();
             }
 
+            var checklogin = function(){
+                $.ajax('/main/checklogin',{
+                    type :'get',
+                    dataType :'json',
+                    success: function(result){
+                        if(!result || !result.success ){
+                            $('.idlabel').remove();
+                            $('.logged').hide();
+                            $('.notlogged').show();
+                        } else {
+                            $('#loggedlabel').append('<div class="idlabel">'+result.userid+'</div>');
+                            $('.logged').show();
+                            $('.notlogged').hide();
+                        }
+                    },
+                    error : function(){
+                        alert('crashed');
+                    }
+                });
+            }
+
             var showIndex = function(){
                 hideAll();
 
                 showLoading();
                 refreshIndexTable(function(){
-                    $('.notlogged').show();
+                    checklogin();
                     $('.cart').show();
                     $('.loading').hide();
                     $('.indexPage').show();
@@ -129,6 +150,42 @@
                 });
             }
 
+            $('.loginForm').submit(function(event){
+                event.preventDefault();
+                console.log('prevented');
+                $.ajax('/main/login',{
+                    type :'post',
+                    dataType :'json',
+                    data : $('.loginForm').serialize(),
+                    success :function(result){
+                        if(!result || !result.success ){
+                            alert(result && !result.success ? 'wrong login' : 'login error');
+                        } else {
+                            window.location.hash='#index';
+                        }
+                    },
+                    error : function(){
+                        alert ('crashed');
+                    }
+                })
+            });
+
+            var logout = function(){
+                $.ajax('/main/logout',{
+                    type : 'get' ,
+                    dataType :'json' ,
+                    success : function (result){
+                        if(!result || !result.success){
+                            alert(result && !result.success ? 'cant logout' : 'logout error');
+                        } else {
+                            window.location.hash = '#index';
+                        }
+                    },
+                    error : function(){
+                        alert('crashed');
+                    }
+                })
+            }
 
             var hashChange = function(){
 
@@ -137,6 +194,7 @@
                     case '#index' : showIndex(); break;
                     case '#login' : showLogin();break;
                     case '#cart' : showCart();break;
+                    case '#logout':logout();break;
                     default :
                         if(window.location.hash.indexOf('#addtocart/id/')==0){
                             hideAll();
@@ -153,7 +211,7 @@
                                         alert(result && !result.success ? result.message : 'Error')
                                     } else {
                                         window.location.hash='#index';
-                                        showIndex();
+
                                     }
                                 },
                                 error : function (result){
@@ -206,7 +264,7 @@
             <a href="#login">Login</a>
         </div>
 
-        <div class="logged">Logged as :</div>
+        <div class="logged" id="loggedlabel">Logged as :</div>
 
         <div class="logged">
             <a href="#logout">Logout</a>

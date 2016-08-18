@@ -19,23 +19,56 @@ class MainController extends Zend_Controller_Action{
         }
     }
 
+    public function checkloginAction(){
+        $admin = new Zend_Session_Namespace('admin');
+        if(isset($admin->name)){
+            echo Zend_Json::encode(array(
+                'success' => true ,
+                'userid' => $admin->name
+            ));
+        } else {
+            echo Zend_Json::encode(array(
+                'success' => false
+            ));
+        }
+    }
     public function loginAction(){
-        $this->view->form = $form = new Application_Forms_Login();
-        if($this->getRequest()->getParam('id')!==null){
-            if($this->getRequest()->getParam('id')==USER && $this->getRequest()->getParam('password')==PASSWORD){
+
+        if($this->getRequest()->getParam('userid')!==null){
+
+            if($this->getRequest()->getParam('userid')==USER && $this->getRequest()->getParam('password')==PASSWORD){
                 $admin=new Zend_Session_Namespace('admin');
-                $admin->name=$this->getRequest()->getParam('id');
-                $this->_helper->redirector->gotoUrl('/');
+                $admin->name=$this->getRequest()->getParam('userid');
+                echo Zend_Json::encode(array(
+                    'success' => true
+                ));
             } else {
-                $this->view->message='Wrong login';
+                echo Zend_Json::encode(array(
+                    'success' => false
+                ));
+
             }
+        } else{
+            echo Zend_Json::encode(array(
+                'success' => false
+            ));
         }
     }
 
+
+
     public function logoutAction(){
-        $admin = new Zend_Session_Namespace('admin');
-        unset($admin->name);
-        $this->_helper->redirector->gotoUrl('/');
+        try {
+            $admin = new Zend_Session_Namespace('admin');
+            unset($admin->name);
+            echo Zend_Json::encode(array(
+                'success' => true
+            ));
+        } catch (Exeption $ex){
+            echo Zend_Json::encode(array(
+                'success' => false
+            ));
+        }
     }
 
     public function cartAction(){
