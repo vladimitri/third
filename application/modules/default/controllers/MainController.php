@@ -55,8 +55,6 @@ class MainController extends Zend_Controller_Action{
         }
     }
 
-
-
     public function logoutAction(){
         try {
             $admin = new Zend_Session_Namespace('admin');
@@ -155,6 +153,46 @@ class MainController extends Zend_Controller_Action{
                 ));
             }
         }
+    }
+
+    public function addAction(){
+        if($this->getRequest()->getParam('prodTitle')){
+            $products = new Application_Models_Products;
+            $product = $products->createRow();
+            $product->title = $this->getRequest()->getParam('prodTitle');
+            $product->price = $this->getRequest()->getParam('prodPrice');
+            $product->description = $this->getRequest()->getParam('prodDescription');
+            $product->image = $this->getRequest()->getParam('prodImage');
+            $product->save();
+            echo Zend_Json::encode(array(
+                'success' => true
+            ));
+        } else {
+            echo Zend_Json::encode(array(
+                'success' => false
+            ));
+        }
+    }
+    public function removeAction(){
+        if($this->getRequest()->getParam('id')!==null){
+            $products = new Application_Models_Products();
+            $product = $products->fetchRow(array('id = ?'=>$this->getRequest()->getParam('id')));
+            if($product){
+                $product->delete();
+                echo Zend_Json::encode(array(
+                    'success' => true
+                ));
+            } else {
+                echo Zend_Json::encode(array(
+                    'success' => false
+                ));
+            }
+        } else {
+            echo Zend_Json::encode(array(
+                'success' => false
+            ));
+        }
+
     }
 
 }
