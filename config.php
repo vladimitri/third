@@ -5,4 +5,5 @@
     define('DBDATABASE', 'first');
     define('USER','aaa');
     define('PASSWORD','aaa');
+    define('EMAIL','emailpentrutestareaplicatie@gmail.com');
 ?>

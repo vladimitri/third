@@ -227,6 +227,23 @@
                 }
             }
 
+            var buyProducts = function(){
+                $.ajax('/main/checkout',{
+                    type : 'get' ,
+                    dataType : 'json' ,
+                    success : function(result){
+                        if(!result || !result.success){
+                            alert(result && !result.success ? 'didnt work' : 'error');
+                        } else {
+                            showIndex();
+                        }
+                    },
+                    error : function(){
+                        alert('crashed');
+                    }
+                });
+            }
+
             $('.loginForm').submit(function(event){
                 event.preventDefault();
                 $.ajax('/main/login',{
@@ -265,6 +282,26 @@
                 });
             });
 
+            $('.editForm').submit(function(event){
+                event.preventDefault();
+                hideAll();
+                $.ajax('/main/editproduct',{
+                    type : 'get' ,
+                    dataType :'Json' ,
+                    data :  $('.editForm').serialize() ,
+                    success : function(result){
+                        if(!result ||!result.success){
+                            alert(result && !result.success ? 'not added' : 'error')
+                        } else {
+                            window.location.hash = '#edit';
+                        }
+                    } ,
+                    error : function(){
+                        alert('crashed');
+                    }
+                });
+            });
+
             var hashChange = function(){
 
                 switch(window.location.hash){
@@ -275,6 +312,7 @@
                     case '#logout':logout();break;
                     case '#edit':showEditMode();break;
                     case '#add':addProduct();break;
+                    case '#buy':buyProducts();break;
                     default :
                         if(window.location.hash.indexOf('#addtocart/id/')==0){
                             hideAll();
@@ -348,10 +386,44 @@
                                 hideLoading();
                                 window.location.hash = '#index';
                             }
+                        } else if(window.location.hash.indexOf('#edit/id/')==0){
+                            showLoading();
+                            if(checkloginAsync()){
+                                hideAll();
+                                var elements = window.location.hash.split('/');
+                                var id = elements[2];
+                                $.ajax('/main/getproduct',{
+                                    type : 'get' ,
+                                    dataType :'json',
+                                    data :{
+                                        id : id
+                                    },
+                                    success : function(result){
+                                        if(!result || !result.success || !result.data){
+                                            console.log(result);
+                                            alert (result && !result.success ? 'didnt work' : 'error');
+                                        } else {
+                                            var inf = result.data;
+                                            $('#etitle').val(inf['title']);
+                                            $('#edescription').val(inf['description']);
+                                            $('#eprice').val(inf['price']);
+                                            $('#eimage').val(inf['image']);
+                                            $('#eid').val(inf['id']);
+                                            $('.editD').show();
+                                        }
+                                    },
+                                    error : function(){
+                                        alert('crashed');
+                                    }
+                                });
+                                hideLoading();
+                            } else {
+                                hideLoading();
+                                window.location.hash = '#index';
+                            }
                         }
                         ;break
                 }
-
             }
             $(window).on('hashchange', hashChange);
             hashChange();
@@ -428,6 +500,18 @@
             Price:<input type="number" name="prodPrice"><br/>
             Description:<textarea rows="4" cols="50" name="prodDescription"></textarea><br/>
             Image:<input type="text" name="prodImage"><br/>
+            <input type="submit" value="Save"><br/>
+            <a href="#edit" >Go back</a>
+        </form>
+    </div>
+
+    <div class="editD">
+        <form class="editForm">
+            <input id="eid" type="hidden" name="prodId">
+            Title:<input id="etitle" type="text" name="prodTitle"><br/>
+            Price:<input id="eprice" type="number" name="prodPrice"><br/>
+            Description:<textarea id="edescription" rows="4" cols="50" name="prodDescription"></textarea><br/>
+            Image:<input id="eimage" type="text" name="prodImage"><br/>
             <input type="submit" value="Save"><br/>
             <a href="#edit" >Go back</a>
         </form>

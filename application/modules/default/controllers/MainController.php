@@ -90,7 +90,6 @@ class MainController extends Zend_Controller_Action{
                 'message' => $ex->getMessage()
             ));
         }
-
     }
 
     public function addtocartAction(){
@@ -192,10 +191,80 @@ class MainController extends Zend_Controller_Action{
                 'success' => false
             ));
         }
+    }
 
+    public function getproductAction(){
+        if($this->getRequest()->getParam('id')!==null){
+            $products = new Application_Models_Products;
+            $product = $products->fetchRow(array('id = ?'=>$this->getRequest()->getParam('id')));
+            if($product){
+                echo Zend_Json::encode(array(
+                    'success'=>true ,
+                    'data' => $product->toArray()
+                ));
+            } else {
+                echo Zend_Json::encode(array(
+                    'success'=>false
+                ));
+            }
+        } else {
+            echo Zend_Json::encode(array(
+                'success'=>false
+            ));
+        }
+    }
+
+    public function editproductAction(){
+        if($this->getRequest()->getParam('prodId')!==null){
+            $products = new Application_Models_Products;
+            $product = $products->fetchRow(array('id = ?'=>$this->getRequest()->getParam('prodId')));
+            if($product){
+                $product->title = $this->getRequest()->getParam('prodTitle');
+                $product->price = $this->getRequest()->getParam('prodPrice');
+                $product->description = $this->getRequest()->getParam('prodDescription');
+                $product->image = $this->getRequest()->getParam('prodImage');
+                $product->save();
+                echo Zend_Json::encode(array(
+                    'success'=>true ,
+                ));
+            } else {
+                echo Zend_Json::encode(array(
+                    'success'=>false
+                ));
+            }
+        } else {
+            echo Zend_Json::encode(array(
+                'success'=>false
+            ));
+        }
+    }
+
+    public function checkoutAction(){
+        $cart = new Zend_Session_Namespace('cart');
+        if(isset($cart->products)){
+            $message="Thank you! ";
+            $products = new Application_Models_Products();
+            $prods = $products ->fetchAll(array('id IN (?)'=>array_keys($cart->products)));
+            $total = 0;
+
+            foreach($prods as $product){
+                $message .= " ".$product->title."  quantity: ".$cart->products[$product->id];
+                $total += $cart->products[$product->id]*$product->price;
+            }
+            $message.=' Total price:'.$total;
+            $headers="From:emailpentrutestareaplicatie@gmail.com";
+            mail(EMAIL,"Testing",$message,$headers);
+            unset($cart->products);
+            echo Zend_Json::encode(array(
+                'success'=> true
+            ));
+
+        } else {
+            echo Zend_Json::encode(array(
+                'success'=> false
+            ));
+        }
     }
 
 }
-
-
 ?>
