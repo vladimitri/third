@@ -155,28 +155,44 @@ class MainController extends Zend_Controller_Action{
     }
 
     public function addAction(){
-        if($this->getRequest()->getParam('prodTitle')){
-            $products = new Application_Models_Products;
-            $product = $products->createRow();
+        $uploadpath='C:/xampp/htdocs/third/uploads/';
+        $products = new Application_Models_Products();
+        $uploadAdapter = new Zend_File_Transfer_Adapter_Http();
+        $uploadAdapter -> setDestination($uploadpath);
+        if($this->getRequest()->getParam('save')!==null && $this->getRequest()->getParam('prodTitle')!==''){
+            if(!$this->getRequest()->getParam('prodId')){
+                $product = $products->createRow();
+            } else {
+                $product = $products->fetchRow(array('id = ?' => $this->getRequest()->getParam('prodId')));
+            }
+
             $product->title = $this->getRequest()->getParam('prodTitle');
             $product->price = $this->getRequest()->getParam('prodPrice');
             $product->description = $this->getRequest()->getParam('prodDescription');
-            $product->image = $this->getRequest()->getParam('prodImage');
+            echo $uploadAdapter->getFileName();
+            $fileName = basename($uploadAdapter->getFileName());
+            if ($fileName){
+                if ($fileName !== $product->image && $product->image) {
+                    unlink($uploadpath.$product->id.$product->image);
+                }
+                $product->image = $fileName;
+            }
             $product->save();
-            echo Zend_Json::encode(array(
-                'success' => true
-            ));
-        } else {
-            echo Zend_Json::encode(array(
-                'success' => false
-            ));
+            if($fileName){
+                $uploadAdapter->addFilter('Rename', array('target' => $uploadAdapter->getDestination() . '/' .  $product->id.$fileName));
+                $uploadAdapter ->receive();
+                //rename($uploadpath.$name,);
+            }
+
         }
     }
     public function removeAction(){
         if($this->getRequest()->getParam('id')!==null){
+            $uploadpath='C:/xampp/htdocs/third/uploads/';
             $products = new Application_Models_Products();
             $product = $products->fetchRow(array('id = ?'=>$this->getRequest()->getParam('id')));
             if($product){
+                unlink($uploadpath.$product->id.$product->image);
                 $product->delete();
                 echo Zend_Json::encode(array(
                     'success' => true
@@ -201,31 +217,6 @@ class MainController extends Zend_Controller_Action{
                 echo Zend_Json::encode(array(
                     'success'=>true ,
                     'data' => $product->toArray()
-                ));
-            } else {
-                echo Zend_Json::encode(array(
-                    'success'=>false
-                ));
-            }
-        } else {
-            echo Zend_Json::encode(array(
-                'success'=>false
-            ));
-        }
-    }
-
-    public function editproductAction(){
-        if($this->getRequest()->getParam('prodId')!==null){
-            $products = new Application_Models_Products;
-            $product = $products->fetchRow(array('id = ?'=>$this->getRequest()->getParam('prodId')));
-            if($product){
-                $product->title = $this->getRequest()->getParam('prodTitle');
-                $product->price = $this->getRequest()->getParam('prodPrice');
-                $product->description = $this->getRequest()->getParam('prodDescription');
-                $product->image = $this->getRequest()->getParam('prodImage');
-                $product->save();
-                echo Zend_Json::encode(array(
-                    'success'=>true ,
                 ));
             } else {
                 echo Zend_Json::encode(array(

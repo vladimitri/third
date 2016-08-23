@@ -4,5 +4,25 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="PHP">
+        <CLASSES>
+          <root url="file://C:/ZendFramework-1.12.19/library" />
+        </CLASSES>
+        <SOURCES>
+          <root url="file://C:/ZendFramework-1.12.19/library" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="PHARS">
+        <CLASSES>
+          <root url="phar://C:/ZendFramework-1.12.19/library/Zend/Service/WindowsAzure/CommandLine/Scaffolders/DefaultScaffolder.phar/" />
+        </CLASSES>
+        <SOURCES>
+          <root url="phar://C:/ZendFramework-1.12.19/library/Zend/Service/WindowsAzure/CommandLine/Scaffolders/DefaultScaffolder.phar/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

@@ -11,10 +11,14 @@
         $(document).ready(function() {
 
             var hideAll = function(){
-                $('div').hide();
+                $('.loginPage').hide();
+                $('.editPage').hide();
+                $('.indexPage').hide();
+                $('.addPage').hide();
+                $('.cartPage').hide();
             }
 
-            function checklogin (){
+            function checklogin (callback){
                 $.ajax('/main/checklogin',{
                     type :'get',
                     dataType :'json',
@@ -28,35 +32,15 @@
                             $('.logged').show();
                             $('.notlogged').hide();
                         }
-                    },
-                    error : function(){
-                        alert('crashed');
-                    }
-                });
-
-            }
-
-            function checkloginAsync (){
-                var x = $.ajax('/main/checklogin',{
-                    type :'get',
-                    dataType :'json',
-                    async : false ,
-                    success: function(result){
-                        if(!result || !result.success ){
-                            $('.idlabel').remove();
-                            $('.logged').hide();
-                            $('.notlogged').show();
-                        } else {
-                            $('#loggedlabel').append('<div class="idlabel">'+result.userid+'</div>');
-                            $('.logged').show();
-                            $('.notlogged').hide();
+                        if(callback){
+                            callback(result.success);
                         }
                     },
                     error : function(){
                         alert('crashed');
                     }
                 });
-                return JSON.parse(x.responseText).success;
+
             }
 
             var showIndex = function(){
@@ -76,38 +60,36 @@
             var showEditMode = function(){
                 hideAll();
                 showLoading();
-                if(checkloginAsync() == true){
-                    refreshIndexTable(function(){
-                        $('.loading').hide();
-                        $('.add').show();
-                        $('.indexPage').show();
-                        $('.home').show();
-                        $('#edit').hide();
-                        $('#logout').hide();
-                        $('.editbuttons').show();
-                        $('.indexbuttons').hide();
-                    });
-                } else {
-                    window.location.hash = '#index';
-                }
-            }
-            var showEmptyCart = function (){
-                hideAll();
-                $('.cartPage').hide();
-                $('.emptycart').show();
+                checklogin(function(loggedin){
+                    if(loggedin){
+                        refreshIndexTable(function(){
+                            $('.loading').hide();
+                            $('.add').show();
+                            $('.indexPage').show();
+                            $('.home').show();
+                            $('#edit').hide();
+                            $('#logout').hide();
+                            $('.editbuttons').show();
+                            $('.indexbuttons').hide();
+                        });
+                    } else {
+                        window.location.hash = '#index';
+                    }
+                })
             }
 
             var showLogin = function(){
                 hideAll();
-                $('.loginD').show();
+                $('.loginPage').show();
             }
 
             var showCart = function(){
-                hideAll();
+                $('')
                 showLoading();
                 refreshCartTable(function(){
                     $('.loading').hide();
                     $('.cartPage').show();
+
                 });
             }
 
@@ -146,14 +128,15 @@
                                 $('.cartTable').append(html);
                                 $('.cartTable').append('<p class="cartTotal">Total price :' + total + '</p>');
                                 $('.cartTable').append('<a class="cartTotal" href="#buy">Buy</a>');
-                                if(callback){
-                                    callback();
-                                }
+
+                                $('.cartTable').show();
+                                $('.emptycart').hide();
                             } else {
-                                if(callback){
-                                    callback();
-                                }
-                                showEmptyCart();
+                                $('.cartTable').hide();
+                                $('.emptycart').show();
+                            }
+                            if(callback){
+                                callback();
                             }
                         }
 
@@ -219,12 +202,19 @@
             var addProduct = function(){
                 hideAll();
                 showLoading();
-                if(checkloginAsync() == true) {
-                    hideLoading();
-                    $('.addD').show();
-                } else {
-                    window.location.hash = '#index';
-                }
+                checklogin(function(loggedin){
+                    if(loggedin){
+                        hideLoading();
+                        $('#title').val("");
+                        $('#description').val("");
+                        $('#price').val(0);
+                        $('#image').val("");
+                        $('#id').val(null);
+                        $('.editPage').show();
+                    } else {
+                        window.location.hash = '#index';
+                    }
+                });
             }
 
             var buyProducts = function(){
@@ -262,45 +252,11 @@
                     }
                 })
             });
-
-            $('.addForm').submit(function(event){
-                event.preventDefault();
-                $.ajax('/main/add',{
-                    type : 'get' ,
-                    dataType :'Json' ,
-                    data : $('.addForm').serialize(),
-                    success : function(result){
-                        if(!result ||!result.success){
-                            alert(result && !result.success ? 'not added' : 'error')
-                        } else {
-                            window.location.hash = '#edit';
-                        }
-                    } ,
-                    error : function(){
-                        alert('crashed');
-                    }
-                });
+            $('.editform').submit(function(event){
+                window.location.hash = '#edit'
             });
 
-            $('.editForm').submit(function(event){
-                event.preventDefault();
-                hideAll();
-                $.ajax('/main/editproduct',{
-                    type : 'get' ,
-                    dataType :'Json' ,
-                    data :  $('.editForm').serialize() ,
-                    success : function(result){
-                        if(!result ||!result.success){
-                            alert(result && !result.success ? 'not added' : 'error')
-                        } else {
-                            window.location.hash = '#edit';
-                        }
-                    } ,
-                    error : function(){
-                        alert('crashed');
-                    }
-                });
-            });
+
 
             var hashChange = function(){
 
@@ -329,7 +285,6 @@
                                         alert(result && !result.success ? result.message : 'Error')
                                     } else {
                                         window.location.hash='#index';
-
                                     }
                                 },
                                 error : function (result){
@@ -360,67 +315,70 @@
                             });
                         } else if(window.location.hash.indexOf('#remove/id/')==0){
                             showLoading();
-                            if(checkloginAsync()){
-                                hideAll();
-                                var elements = window.location.hash.split('/');
-                                var id = elements[2];
-                                $.ajax('/main/remove',{
-                                    type : 'get' ,
-                                    dataType :'json',
-                                    data :{
-                                        id : id
-                                    },
-                                    success : function(result){
-                                        if(!result || !result.success){
-                                            alert (result && !result.success ? 'didnt work' : 'error');
-                                        } else {
-                                            window.location.hash='#edit';
+                            checklogin(function(loggedin){
+                                if(loggedin){
+                                    hideAll();
+                                    var elements = window.location.hash.split('/');
+                                    var id = elements[2];
+                                    $.ajax('/main/remove',{
+                                        type : 'get' ,
+                                        dataType :'json',
+                                        data :{
+                                            id : id
+                                        },
+                                        success : function(result){
+                                            if(!result || !result.success){
+                                                alert (result && !result.success ? 'didnt work' : 'error');
+                                            } else {
+                                                window.location.hash='#edit';
+                                            }
+                                        },
+                                        error : function(){
+                                            alert('crashed');
                                         }
-                                    },
-                                    error : function(){
-                                        alert('crashed');
-                                    }
-                                });
-                                hideLoading();
-                            } else {
-                                hideLoading();
-                                window.location.hash = '#index';
-                            }
+                                    });
+                                    hideLoading();
+                                } else {
+                                    hideLoading();
+                                    window.location.hash = '#index';
+                                }
+                            });
                         } else if(window.location.hash.indexOf('#edit/id/')==0){
                             showLoading();
-                            if(checkloginAsync()){
-                                hideAll();
-                                var elements = window.location.hash.split('/');
-                                var id = elements[2];
-                                $.ajax('/main/getproduct',{
-                                    type : 'get' ,
-                                    dataType :'json',
-                                    data :{
-                                        id : id
-                                    },
-                                    success : function(result){
-                                        if(!result || !result.success || !result.data){
-                                            console.log(result);
-                                            alert (result && !result.success ? 'didnt work' : 'error');
-                                        } else {
-                                            var inf = result.data;
-                                            $('#etitle').val(inf['title']);
-                                            $('#edescription').val(inf['description']);
-                                            $('#eprice').val(inf['price']);
-                                            $('#eimage').val(inf['image']);
-                                            $('#eid').val(inf['id']);
-                                            $('.editD').show();
+                            checklogin(function(loggedin){
+                                if(loggedin){
+                                    hideAll();
+                                    var elements = window.location.hash.split('/');
+                                    var id = elements[2];
+                                    $.ajax('/main/getproduct',{
+                                        type : 'get' ,
+                                        dataType :'json',
+                                        data :{
+                                            id : id
+                                        },
+                                        success : function(result){
+                                            if(!result || !result.success || !result.data){
+                                                console.log(result);
+                                                alert (result && !result.success ? 'didnt work' : 'error');
+                                            } else {
+                                                var inf = result.data;
+                                                $('#title').val(inf['title']);
+                                                $('#description').val(inf['description']);
+                                                $('#price').val(inf['price']);
+                                                $('#id').val(inf['id']);
+                                                $('.editPage').show();
+                                            }
+                                        },
+                                        error : function(){
+                                            alert('crashed');
                                         }
-                                    },
-                                    error : function(){
-                                        alert('crashed');
-                                    }
-                                });
-                                hideLoading();
-                            } else {
-                                hideLoading();
-                                window.location.hash = '#index';
-                            }
+                                    });
+                                    hideLoading();
+                                } else {
+                                    hideLoading();
+                                    window.location.hash = '#index';
+                                }
+                            });
                         }
                         ;break
                 }
@@ -467,14 +425,11 @@
         </table>
     </div>
 
-    <div class="emptycart">
-        The cart is empty
-        <a href="#index">Home</a>
-    </div>
-
     <div class="cartPage">
-        <a href="#index" >Home</a><br/>
-        Incart:
+        <div class="emptycart">
+            The cart is empty
+        </div>
+        <a href="#index">Home</a><br/>
         <table class="cartTable">
             <tr>
                 <th>Imagine</th>
@@ -483,9 +438,10 @@
                 <th>Cantitate</th>
             </tr>
         </table>
+
     </div>
 
-    <div class="loginD">
+    <div class="loginPage">
         <form class="loginForm">
             Username:<input type="text" name="userid"><br />
             Password:<input type="password" name="password"><br />
@@ -494,27 +450,18 @@
         </form>
     </div>
 
-    <div class="addD">
-        <form class="addForm">
-            Title:<input type="text" name="prodTitle"><br/>
-            Price:<input type="number" name="prodPrice"><br/>
-            Description:<textarea rows="4" cols="50" name="prodDescription"></textarea><br/>
-            Image:<input type="text" name="prodImage"><br/>
-            <input type="submit" value="Save"><br/>
+    <div class="editPage">
+        <iframe id="frame" name="frame" height="0" width="0" frameborder="0" scrolling="yes" ></iframe>
+        <form class="editForm" action="/main/add" method="post" enctype="multipart/form-data"  target="frame">
+            <input type="hidden" id="id"  name="prodId">
+            Title:<input id="title" type="text" name="prodTitle"><br/>
+            Price:<input id="price" type="number" name="prodPrice"><br/>
+            Description:<textarea id="description" rows="4" cols="50" name="prodDescription"></textarea><br/>
+            Image:<input id="image" type="file" name="prodImage"><br/>
+            <input type="submit" name="save" value="Save"><br/>
             <a href="#edit" >Go back</a>
         </form>
     </div>
 
-    <div class="editD">
-        <form class="editForm">
-            <input id="eid" type="hidden" name="prodId">
-            Title:<input id="etitle" type="text" name="prodTitle"><br/>
-            Price:<input id="eprice" type="number" name="prodPrice"><br/>
-            Description:<textarea id="edescription" rows="4" cols="50" name="prodDescription"></textarea><br/>
-            Image:<input id="eimage" type="text" name="prodImage"><br/>
-            <input type="submit" value="Save"><br/>
-            <a href="#edit" >Go back</a>
-        </form>
-    </div>
 </body>
 </html>
