@@ -16,6 +16,7 @@
                 $('.indexPage').hide();
                 $('.addPage').hide();
                 $('.cartPage').hide();
+                $('.listPage').hide();
             }
 
             function checklogin (callback){
@@ -28,7 +29,8 @@
                             $('.logged').hide();
                             $('.notlogged').show();
                         } else {
-                            $('#loggedlabel').append('<div class="idlabel">'+result.userid+'</div>');
+                            $('#loggedlabel').empty();
+                            $('#loggedlabel').append('Logged as :<div class="idlabel">'+result.userid+'</div>');
                             $('.logged').show();
                             $('.notlogged').hide();
                         }
@@ -45,12 +47,13 @@
 
             var showIndex = function(){
                 hideAll();
-
                 showLoading();
                 refreshIndexTable(function(){
                     checklogin();
-                    $('.cart').show();
                     $('.loading').hide();
+                    $('#cart').show();
+                    $('.indexPage').append($('.indexTable'));
+                    $('.indexTable').show();
                     $('.indexPage').show();
                     $('.editbuttons').hide();
                     $('.indexbuttons').show();
@@ -63,14 +66,12 @@
                 checklogin(function(loggedin){
                     if(loggedin){
                         refreshIndexTable(function(){
-                            $('.loading').hide();
-                            $('.add').show();
-                            $('.indexPage').show();
-                            $('.home').show();
-                            $('#edit').hide();
-                            $('#logout').hide();
-                            $('.editbuttons').show();
-                            $('.indexbuttons').hide();
+                            hideLoading();
+                            $('.listPage').append($('.indexTable'));
+
+                            $('.indexButtons').hide();
+                            $('.editButtons').show();
+                            $('.listPage').show();
                         });
                     } else {
                         window.location.hash = '#index';
@@ -84,17 +85,15 @@
             }
 
             var showCart = function(){
-                $('')
                 showLoading();
                 refreshCartTable(function(){
                     $('.loading').hide();
                     $('.cartPage').show();
-
                 });
             }
 
             var showLoading = function(){
-                $('div').hide();
+                hideAll();
                 $('.loading').show();
             }
 
@@ -114,14 +113,24 @@
                             $('.cartTotal').remove();
                             var total=0;
                             var html ='';
-                            if(result.data.length!=0) {
-                                $.each(result.data, function (index, value) {
-                                    total += value.price * result.quantity[value.id];
+                            var data = result.data;
+                            var quantity = data['quantity'];
+                            delete data['quantity'];
+                            if(quantity!=null) {
+                                $.each(data, function (index, value) {
+                                    if(value.image!=""){
+                                        var img ;
+                                        img = value.id + value.image;
+                                    } else {
+                                        var img;
+                                        img = 'image.jpg';
+                                    }
+                                    total += value.price * quantity[value.id];
                                     html += '<tr class="cartRow">' +
-                                            '<td>' + '<img src="uploads/' + value.id + value.image + '" class="img">' + '</td>' +
+                                            '<td>' + '<img src="uploads/' + img + '" class="img">' + '</td>' +
                                             '<td>' + value.title + '</td>' +
                                             '<td>' + value.price + '</td>' +
-                                            '<td>' + result.quantity[value.id] + '</td>' +
+                                            '<td>' + quantity[value.id] + '</td>' +
                                             '<td>' + '<a href="#removefromcart/id/' + value.id + '">Remove from cart</a>' + '</td>'
                                     '</tr>';
                                 });
@@ -158,15 +167,22 @@
                             $('.indexRow').remove();
                             var html = '';
                             $.each(result.data,function(index,value){
+                                if(value.image!=""){
+                                    var img ;
+                                    img = value.id + value.image;
+                                } else {
+                                    var img;
+                                    img = 'image.jpg';
+                                }
                                 html += ' <tr class="indexRow"> ' +
-                                            '<td>' + '<img src="uploads/'+value.id + value.image+'" class="img">' + '</td>' +
+                                            '<td>' + '<img src="uploads/'+img+'" class="img">' + '</td>' +
                                             '<td>' + value.title + '</td>' +
                                             '<td>' + value.price + '</td>' +
                                             '<td>' + value.description + '</td>' +
                                             '<td>'+
-                                                '<a  class="editbuttons" href="#edit/id/'+value.id+'">Edit</a>'+ ' ' +
-                                                '<a  class="editbuttons" href="#remove/id/'+value.id+'">Remove</a>'+ ' ' +
-                                                '<a  class="indexbuttons" href="#addtocart/id/'+value.id+'">Add to cart</a>'+
+                                                '<a  class="editButtons" href="#edit/id/'+value.id+'">Edit</a>'+ ' ' +
+                                                '<a  class="editButtons" href="#remove/id/'+value.id+'">Remove</a>'+ ' ' +
+                                                '<a  class="indexButtons" href="#addtocart/id/'+value.id+'">Add to cart</a>'+
                                             '</td>'
                                         '</tr>'
                             });
@@ -205,6 +221,7 @@
                 checklogin(function(loggedin){
                     if(loggedin){
                         hideLoading();
+                        $('.tmpimg').remove();
                         $('#title').val("");
                         $('#description').val("");
                         $('#price').val(0);
@@ -256,6 +273,9 @@
                 window.location.hash = '#edit'
             });
 
+            $('#frame').on('load',function(){
+
+            });
 
 
             var hashChange = function(){
@@ -306,7 +326,6 @@
                                         alert (result && !result.success ? 'didnt work' : 'error');
                                     } else {
                                         window.location.hash='#cart';
-                                        showCart();
                                     }
                                 },
                                 error : function(){
@@ -362,11 +381,17 @@
                                                 alert (result && !result.success ? 'didnt work' : 'error');
                                             } else {
                                                 var inf = result.data;
+                                                $('.tmpimg').remove();
                                                 $('#title').val(inf['title']);
                                                 $('#description').val(inf['description']);
                                                 $('#price').val(inf['price']);
                                                 $('#id').val(inf['id']);
                                                 $('.editPage').show();
+                                                $('#image').val("");
+                                                if(inf['image']){
+                                                    $('.currentImage').append('<img class="tmpimg" src="http://third.local.com/uploads/'+inf['id']+inf['image'] +'" style="height :100px;width :150px;">');
+                                                    $('.currentImage').show();
+                                                }
                                             }
                                         },
                                         error : function(){
@@ -397,32 +422,33 @@
         <div class="notlogged" id="login">
             <a href="#login">Login</a>
         </div>
-
-        <div class="home"><a href="#index">Home</a></div>
-
-        <div class="logged" id="loggedlabel">Logged as :</div>
-
+        <div class="logged" id="loggedlabel"></div>
         <div class="logged" id="logout">
             <a href="#logout">Logout</a>
         </div>
-
         <div class="logged" id="edit">
             <a href="#edit">Edit</a>
         </div>
 
-        <div class="cart"><a href="#cart">Cart</a></div>
-
-        <div class="add"><a href="#add">Add</a></div>
-
-        Produse:
+        <div id="cart"><a href="#cart">Cart</a></div>
         <table class="indexTable">
+            Produse:
             <tr>
                 <th>Imagine</th>
                 <th>Nume produs</th>
-                <th>Price</th>
+                <th>Pret</th>
                 <th>Descriere</th>
             </tr>
         </table>
+    </div>
+
+    <div class="listPage">
+
+        <div class="home">
+            <a href="#index">Home</a>
+        </div>
+        <div ><a href="#add">Add</a></div>
+
     </div>
 
     <div class="cartPage">
@@ -434,7 +460,7 @@
             <tr>
                 <th>Imagine</th>
                 <th>Nume produs</th>
-                <th>Price</th>
+                <th>Pret</th>
                 <th>Cantitate</th>
             </tr>
         </table>
@@ -458,6 +484,7 @@
             Price:<input id="price" type="number" name="prodPrice"><br/>
             Description:<textarea id="description" rows="4" cols="50" name="prodDescription"></textarea><br/>
             Image:<input id="image" type="file" name="prodImage"><br/>
+            <div class="currentImage"></div>
             <input type="submit" name="save" value="Save"><br/>
             <a href="#edit" >Go back</a>
         </form>

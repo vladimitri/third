@@ -78,10 +78,10 @@ class MainController extends Zend_Controller_Action{
             if(isset($cart->products)) {
                 $data = $products->fetchAll(array('id IN (?)' => array_keys($cart->products)))->toArray();
             }
+            $data['quantity'] = $cart->products;
             echo Zend_Json::encode(array(
                 'success' => true ,
-                'data' => $data,
-                'quantity' =>$cart->products
+                'data' => $data
             ));
 
         } catch (Exception $ex) {
@@ -181,7 +181,6 @@ class MainController extends Zend_Controller_Action{
             if($fileName){
                 $uploadAdapter->addFilter('Rename', array('target' => $uploadAdapter->getDestination() . '/' .  $product->id.$fileName));
                 $uploadAdapter ->receive();
-                //rename($uploadpath.$name,);
             }
 
         }
@@ -192,7 +191,9 @@ class MainController extends Zend_Controller_Action{
             $products = new Application_Models_Products();
             $product = $products->fetchRow(array('id = ?'=>$this->getRequest()->getParam('id')));
             if($product){
-                unlink($uploadpath.$product->id.$product->image);
+                if($product->image){
+                    unlink($uploadpath.$product->id.$product->image);
+                }
                 $product->delete();
                 echo Zend_Json::encode(array(
                     'success' => true
